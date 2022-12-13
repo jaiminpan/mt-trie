@@ -1,6 +1,7 @@
 package trie
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/jaiminpan/mt-trie/accdb"
@@ -21,9 +22,8 @@ func TestEmptyTrie(t *testing.T) {
 	}
 }
 
-/*
 func TestMemoryUpdate(t *testing.T) {
-	triedb := NewDatabase(NewMemoryDatabase())
+	triedb := NewTrieDB(NewMemoryDatabase())
 
 	trie := NewEmpty(triedb)
 	key := make([]byte, 32)
@@ -34,9 +34,10 @@ func TestMemoryUpdate(t *testing.T) {
 	}
 }
 
+/*
 func TestUpdate(t *testing.T) {
 
-	triedb := NewDatabase(NewMemoryDatabase())
+	triedb := NewTrieDB(NewMemoryDatabase())
 	trie := NewEmpty(triedb)
 
 	trie.Update([]byte("120000"), []byte("qwerqwerqwerqwerqwerqwerqwerqwer"))
@@ -65,7 +66,7 @@ func TestUpdate(t *testing.T) {
 
 func TestRollback(t *testing.T) {
 
-	triedb := NewDatabase(NewMemoryDatabase())
+	triedb := NewTrieDB(NewMemoryDatabase())
 	trie := NewEmpty(triedb)
 
 	trie.Update([]byte("120000"), []byte("qwerqwerqwerqwerqwerqwerqwerqwer"))

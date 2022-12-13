@@ -19,7 +19,7 @@ type KeyValueWriter interface {
 }
 
 type KeyValueStore interface {
-	// KeyValueReader
+	KeyValueReader
 	// KeyValueWriter
 	// KeyValueStater
 	// Batcher

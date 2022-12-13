@@ -47,3 +47,26 @@ func decodeNibbles(nibbles []byte, bytes []byte) {
 		bytes[bi] = nibbles[ni]<<4 | nibbles[ni+1]
 	}
 }
+
+// prefixLen returns the length of the common prefix of a and b.
+func prefixLen(a, b []byte) int {
+	a_len, b_len := len(a), len(b)
+	length := a_len
+	if b_len < a_len {
+		length = b_len
+	}
+
+	for i := 0; i < length; i++ {
+		if a[i] != b[i] {
+			return i
+		}
+	}
+	return length
+}
+
+func prefixConcat(s1 []byte, s2 ...byte) []byte {
+	r := make([]byte, len(s1)+len(s2))
+	copy(r, s1)
+	copy(r[len(s1):], s2)
+	return r
+}
