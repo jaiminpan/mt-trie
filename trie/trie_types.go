@@ -5,6 +5,7 @@ import (
 	"io"
 
 	"github.com/jaiminpan/mt-trie/common"
+	"github.com/jaiminpan/mt-trie/rlp"
 )
 
 // rawNode is a simple binary blob used to differentiate between collapsed trie
@@ -28,7 +29,7 @@ type rawFullNode [17]node
 func (n rawFullNode) cache() (hashNode, bool)   { panic("this should never end up in a live trie") }
 func (n rawFullNode) fstring(ind string) string { panic("this should never end up in a live trie") }
 
-func (n rawFullNode) EncodeRLP(w io.Writer) error {
+func (n rawFullNode) EncodeRLP(w rlp.EncoderBuffer) error {
 	n.encode(w)
 	return nil
 }
