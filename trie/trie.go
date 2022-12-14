@@ -135,7 +135,7 @@ func (t *Trie) resolveAndTrack(n hashNode, prefix []byte) (node, error) {
 	if err != nil {
 		return nil, err
 	}
-	// t.capture.onRead(prefix, blob)
+	t.capture.onRead(prefix, blob)
 	return mustDecodeNode(n, blob), nil
 }
 
@@ -145,6 +145,41 @@ func (t *Trie) Hash() common.Hash {
 	hash, cached, _ := t.hashRoot()
 	t.root = cached
 	return common.BytesToHash(hash.(hashNode))
+}
+
+// Commit collects all dirty nodes in the trie and replaces them
+// with the corresponding node hash.
+// All collected nodes (including dirty leaves if collectLeaf is true)
+// will be encapsulated into a nodeset for return.
+// The returned nodeset can be nil if the trie is clean (nothing to commit).
+// Once the trie is committed, it's not usable anymore.
+// A new trie must be created with new root and updated trie database for following usage
+func (t *Trie) Commit(collectLeaf bool) (common.Hash, *NodeSet, error) {
+	if t.root == nil {
+		return emptyRoot, nil, nil
+	}
+	defer t.capture.reset()
+
+	// Derive the hash for all dirty nodes first. We hold the assumption
+	// in the following procedure that all nodes are hashed.
+	rootHash := t.Hash()
+
+	// Do a quick check if we really need to commit. This can happen e.g.
+	// if we load a trie for reading storage values, but don't write to it.
+	if hashedNode, dirty := t.root.cache(); !dirty {
+		// Replace the root node with the origin hash in order to
+		// ensure all resolved nodes are dropped after the commit.
+		t.root = hashedNode
+		return rootHash, nil, nil
+	}
+	owner := common.Hash{}
+	h := newCommitter(NewNodeSet(owner), t.capture, collectLeaf)
+	newRoot, nodes, err := h.Commit(t.root)
+	if err != nil {
+		return common.Hash{}, nil, err
+	}
+	t.root = newRoot
+	return rootHash, nodes, nil
 }
 
 // hashRoot calculates the root hash of the given trie

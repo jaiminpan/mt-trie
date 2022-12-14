@@ -34,7 +34,6 @@ func TestMemoryUpdate(t *testing.T) {
 	}
 }
 
-/*
 func TestUpdate(t *testing.T) {
 
 	triedb := NewTrieDB(NewMemoryDatabase())
@@ -43,7 +42,11 @@ func TestUpdate(t *testing.T) {
 	trie.Update([]byte("120000"), []byte("qwerqwerqwerqwerqwerqwerqwerqwer"))
 	trie.Update([]byte("123456"), []byte("asdfasdfasdfasdfasdfasdfasdfasdf"))
 	root, nodes, _ := trie.Commit(false)
-	triedb.Update(NewWithNodeSet(nodes))
+
+	merged := NewMergedNodeSet()
+	merged.Merge(nodes)
+
+	triedb.Update(merged)
 	triedb.Commit(root)
 
 	trie, _ = New(TrieID(root), triedb)
@@ -64,6 +67,7 @@ func TestUpdate(t *testing.T) {
 	}
 }
 
+/*
 func TestRollback(t *testing.T) {
 
 	triedb := NewTrieDB(NewMemoryDatabase())
