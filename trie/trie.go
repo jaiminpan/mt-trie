@@ -40,8 +40,8 @@ func (t *Trie) newFlag() nodeFlag {
 	return nodeFlag{dirty: true}
 }
 
-// New creates the trie instance with provided trie id and the read-only
-// database. The state specified by trie id must be available, otherwise
+// New creates the trie instance with provided trie id and the read-only database.
+// The state specified by trie id must be available, otherwise
 // an error will be returned. The trie root specified by trie id can be
 // zero hash or the sha3 hash of an empty string, then trie is initially
 // empty, otherwise, the root node must be present in database or returns
@@ -62,8 +62,8 @@ func New(id *ID, db *TrieDB) (*Trie, error) {
 
 // NewEmpty is a shortcut to create empty tree. It's mostly used in tests.
 func NewEmpty(db *TrieDB) *Trie {
-	tr, _ := New(TrieID(common.Hash{}), db)
-	return tr
+	trie, _ := New(TrieID(common.Hash{}), db)
+	return trie
 }
 
 // The value bytes must not be modified by the caller.

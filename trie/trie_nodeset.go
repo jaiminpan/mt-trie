@@ -1,6 +1,10 @@
 package trie
 
-import "github.com/jaiminpan/mt-trie/common"
+import (
+	"fmt"
+
+	"github.com/jaiminpan/mt-trie/common"
+)
 
 // leaf represents a trie leaf node
 type leaf struct {
@@ -70,4 +74,22 @@ func (set *NodeSet) markDeleted(path []byte, oldv []byte) {
 // addLeaf collects the provided leaf node into set.
 func (set *NodeSet) addLeaf(node *leaf) {
 	set.leaves = append(set.leaves, node)
+}
+
+// MergedNodeSet represents a merged dirty node set for a group of tries.
+type MergedNodeSet struct {
+	sets map[common.Hash]*NodeSet
+}
+
+func NewMergedNodeSet() *MergedNodeSet {
+	return &MergedNodeSet{sets: make(map[common.Hash]*NodeSet)}
+}
+
+func (set *MergedNodeSet) Merge(other *NodeSet) error {
+	_, present := set.sets[other.owner]
+	if present {
+		return fmt.Errorf("duplicate trie for owner %#x", other.owner)
+	}
+	set.sets[other.owner] = other
+	return nil
 }

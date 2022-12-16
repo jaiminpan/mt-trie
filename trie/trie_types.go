@@ -46,8 +46,8 @@ func (n rawShortNode) cache() (hashNode, bool)   { panic("this should never end 
 func (n rawShortNode) fstring(ind string) string { panic("this should never end up in a live trie") }
 
 type cachedNode struct {
-	node node   // Cached collapsed trie node, or raw rlp data
-	size uint16 // Byte size of the useful cached data
+	node node // Cached collapsed trie node, or raw rlp data
+	// size uint16 // Byte size of the useful cached data
 
 	parents  uint32                 // Number of live nodes referencing this one
 	children map[common.Hash]uint16 // External children referenced by this node
@@ -108,6 +108,36 @@ func expandNode(hash hashNode, n node) node {
 	case valueNode, hashNode:
 		return n
 
+	default:
+		panic(fmt.Sprintf("unknown node type: %T", n))
+	}
+}
+
+// forChilds invokes the callback for all the tracked children of this node,
+// both the implicit ones from inside the node as well as the explicit ones
+// from outside the node.
+func (n *cachedNode) forChilds(onChild func(hash common.Hash)) {
+	for child := range n.children {
+		onChild(child)
+	}
+	if _, ok := n.node.(rawNode); !ok {
+		forGatherChildren(n.node, onChild)
+	}
+}
+
+// forGatherChildren traverses the node hierarchy of a collapsed storage node and
+// invokes the callback for all the hashnode children.
+func forGatherChildren(n node, onChild func(hash common.Hash)) {
+	switch n := n.(type) {
+	case *rawShortNode:
+		forGatherChildren(n.Val, onChild)
+	case rawFullNode:
+		for i := 0; i < 16; i++ {
+			forGatherChildren(n[i], onChild)
+		}
+	case hashNode:
+		onChild(common.BytesToHash(n))
+	case valueNode, nil, rawNode:
 	default:
 		panic(fmt.Sprintf("unknown node type: %T", n))
 	}

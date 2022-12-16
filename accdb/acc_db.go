@@ -22,7 +22,7 @@ type KeyValueStore interface {
 	KeyValueReader
 	// KeyValueWriter
 	// KeyValueStater
-	// Batcher
+	Batcher
 	// Iteratee
 	// Compacter
 	// Snapshotter

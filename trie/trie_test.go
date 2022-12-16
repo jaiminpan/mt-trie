@@ -16,16 +16,15 @@ func TestEmptyTrie(t *testing.T) {
 	triedb := NewTrieDB(NewMemoryDatabase())
 	trie := NewEmpty(triedb)
 	res := trie.Hash()
-	exp := emptyRoot
-	if res != exp {
-		t.Errorf("expected %x got %x", exp, res)
+	if res != emptyRoot {
+		t.Errorf("expected %x got %x", emptyRoot, res)
 	}
 }
 
 func TestMemoryUpdate(t *testing.T) {
 	triedb := NewTrieDB(NewMemoryDatabase())
-
 	trie := NewEmpty(triedb)
+
 	key := make([]byte, 32)
 	value := []byte("test")
 	trie.Update(key, value)
@@ -35,7 +34,6 @@ func TestMemoryUpdate(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-
 	triedb := NewTrieDB(NewMemoryDatabase())
 	trie := NewEmpty(triedb)
 
@@ -62,7 +60,7 @@ func TestUpdate(t *testing.T) {
 	}
 
 	_, err = trie.TryGet([]byte("120099"))
-	if err == nil {
+	if err != nil {
 		t.Errorf("Unexpected error: %v", err)
 	}
 }
