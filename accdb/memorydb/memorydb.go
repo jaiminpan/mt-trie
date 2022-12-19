@@ -95,9 +95,9 @@ type keyvalue struct {
 // batch is a write-only memory batch that commits changes to its host
 // database when Write is called. A batch cannot be used concurrently.
 type memBatch struct {
-	db     *MemDB
-	writes []keyvalue
-	size   int
+	db    *MemDB
+	cache []keyvalue
+	size  int
 }
 
 // NewBatch creates a write-only key-value store that buffers changes to its host
@@ -110,14 +110,14 @@ func (db *MemDB) NewBatch() accdb.Batch {
 
 // Put inserts the given value into the batch for later committing.
 func (b *memBatch) Put(key, value []byte) error {
-	b.writes = append(b.writes, keyvalue{common.CopyBytes(key), common.CopyBytes(value), false})
+	b.cache = append(b.cache, keyvalue{common.CopyBytes(key), common.CopyBytes(value), false})
 	b.size += len(key) + len(value)
 	return nil
 }
 
 // Delete inserts the a key removal into the batch for later committing.
 func (b *memBatch) Delete(key []byte) error {
-	b.writes = append(b.writes, keyvalue{common.CopyBytes(key), nil, true})
+	b.cache = append(b.cache, keyvalue{common.CopyBytes(key), nil, true})
 	b.size += len(key)
 	return nil
 }
@@ -128,11 +128,11 @@ func (b *memBatch) ValueSize() int {
 }
 
 // Write flushes any accumulated data to the memory database.
-func (b *memBatch) Write() error {
+func (b *memBatch) Submit() error {
 	b.db.lock.Lock()
 	defer b.db.lock.Unlock()
 
-	for _, keyvalue := range b.writes {
+	for _, keyvalue := range b.cache {
 		if keyvalue.delete {
 			delete(b.db.kv, string(keyvalue.key))
 			continue
@@ -144,22 +144,23 @@ func (b *memBatch) Write() error {
 
 // Reset resets the batch for reuse.
 func (b *memBatch) Reset() {
-	b.writes = b.writes[:0]
+	b.cache = b.cache[:0]
 	b.size = 0
 }
 
 // Replay
-// Replay replays the batch contents.
-func (b *memBatch) Replay(w accdb.KeyValueWriter) error {
-	for _, keyvalue := range b.writes {
+// Write replays the batch contents.
+func (b *memBatch) Write(w accdb.KeyValueWriter) error {
+	for _, keyvalue := range b.cache {
 		if keyvalue.delete {
 			if err := w.Delete(keyvalue.key); err != nil {
 				return err
 			}
 			continue
-		}
-		if err := w.Put(keyvalue.key, keyvalue.value); err != nil {
-			return err
+		} else {
+			if err := w.Put(keyvalue.key, keyvalue.value); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

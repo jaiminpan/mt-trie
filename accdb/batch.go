@@ -13,13 +13,13 @@ type Batch interface {
 	ValueSize() int
 
 	// Write flushes any accumulated data to disk.
-	Write() error
+	Submit() error
 
 	// Reset resets the batch for reuse.
 	Reset()
 
-	// Replay replays the batch contents.
-	Replay(w KeyValueWriter) error
+	// Write replays the batch contents.
+	Write(w KeyValueWriter) error
 }
 
 // Batcher wraps the NewBatch method of a backing data store.

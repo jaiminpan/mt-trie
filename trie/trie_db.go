@@ -278,19 +278,8 @@ func (db *TrieDB) Commit(node common.Hash) error {
 	if err := db.commit(node, batch, uncacher); err != nil {
 		return err
 	}
-	// Trie mostly committed to disk, flush any batch leftovers
-	if err := batch.Write(); err != nil {
-		return err
-	}
-	// Uncache any leftovers in the last batch
-	db.lock.Lock()
-	defer db.lock.Unlock()
-	if err := batch.Replay(uncacher); err != nil {
-		return err
-	}
-	batch.Reset()
 
-	return nil
+	return db.submit(batch, uncacher)
 }
 
 // commit is the private locked version of Commit.
@@ -314,16 +303,20 @@ func (db *TrieDB) commit(hash common.Hash, batch accdb.Batch, uncacher *cleaner)
 		// log.Crit("Failed to store trie node", "err", err)
 	}
 	if batch.ValueSize() >= accdb.IdealBatchSize {
-		if err := batch.Write(); err != nil {
-			return err
-		}
-		db.lock.Lock()
-		err := batch.Replay(uncacher)
-		batch.Reset()
-		db.lock.Unlock()
-		if err != nil {
-			return err
-		}
+		return db.submit(batch, uncacher)
 	}
 	return nil
+}
+
+func (db *TrieDB) submit(batch accdb.Batch, uncacher *cleaner) error {
+	if err := batch.Submit(); err != nil {
+		return err
+	}
+
+	db.lock.Lock()
+	defer db.lock.Unlock()
+
+	err := batch.Write(uncacher)
+	batch.Reset()
+	return err
 }
